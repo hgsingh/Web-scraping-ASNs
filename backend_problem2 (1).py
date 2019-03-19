@@ -74,13 +74,11 @@ def parseAsnFromSoup(asnSoup):
         if(asnList[i].find('td')):
             asnJson[asnNumber]['Name'] = asnList[i].find('td').text.strip()
         if(asnList[i].findAll('td', {'class':'alignright'})):
-            print re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', asnList[i].findAll('td', {'class':'alignright'})[1])
-            #asnJson[asnNumber]['Routes v4'] = int(re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', 
-                                                        #asnList[i].findAll('td', {'class':'alignright'})[1])[0].replace(',',''))
-            #asnJson[asnNumber]['Routes v6'] = int(re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', 
-                                                        #asnList[i].findAll('td', {'class':'alignright'})[3])[0].replace(',',''))
-            #print asnJson
-
+            routeV4String = re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', asnList[i].findAll('td', {'class':'alignright'})[1].text.strip())[0]
+            routeV6String = re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', asnList[i].findAll('td', {'class':'alignright'})[3].text.strip())[0]
+            asnJson[asnNumber]['Routes v4'] = int(routeV4String.replace(',',''))
+            asnJson[asnNumber]['Routes v6'] = int(routeV6String.replace(',',''))
+        print asnJson
 if __name__ == "__main__":
     soup = url_to_soup('http://bgp.he.net/report/world')
     country_soup = soup.find('div', id='countries').find('tbody').findAll('tr')
