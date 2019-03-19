@@ -46,44 +46,45 @@ def getAsnsForCountry(country):
     countryJson = {}
     countryName = ""
     asnSize = 0
-    #for i in range(len(countryData)):
     if(country.find('td').find('div', {'class':'down2 floatleft'})):
         countryName = country.find('td').find('div', {'class':'down2 floatleft'}).text.strip()
     if(country.find('td', {'class':'alignright'})):
         num = (re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', country.find('td', {'class':'alignright'}).text.strip())[0])
         asnSize = int(num.replace(',', ''))
     #generate JSON here
-    countryJson[countryName] = []
     center_aligned_cells = (country.findAll('td', {'class':'centeralign'}))
     for i in range(len(center_aligned_cells)):
         if(center_aligned_cells[i].find('a', href=True)):
-            parseAsnFromSoup(url_to_soup(BASE_URL + center_aligned_cells[i].find('a', href=True)['href']))
+            countryJson[countryName] = parseAsnFromSoup(url_to_soup(BASE_URL + center_aligned_cells[i].find('a', href=True)['href']))
+    return countryJson
 
-    print countryName
-    print asnSize
-    
             
 def parseAsnFromSoup(asnSoup):
     asnList = asnSoup.find('div', id='country').find('tbody').findAll('tr')
-    asnJson = {}
+    asnJson = []
     for i in range(len(asnList)):
-        asnNumber = -1
-        if(asnList[i].find('a', href=True)):
-            asnNumber = asnList[i].find('a', href=True).text.strip()
-            asnJson[asnNumber] = {}
-        if(asnList[i].find('td')):
-            asnJson[asnNumber]['Name'] = asnList[i].find('td').text.strip()
-        if(asnList[i].findAll('td', {'class':'alignright'})):
+        asnNumber = ""
+        asnName = asnList[i].findAll('td')
+        temp = {}
+        for j in range(len(asnName)):
+            if(asnName[j].find('a', href=True)):
+                asnNumber = asnName[j].text.strip()
+                temp[asnNumber] = {}
+            elif(not asnName[j].attrs):
+                temp[asnNumber]['Name'] = asnName[j].text.strip()
+        if(asnList[i].find('td', {'class':'alignright'})):
             routeV4String = re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', asnList[i].findAll('td', {'class':'alignright'})[1].text.strip())[0]
             routeV6String = re.findall('^[0-9]{1,3},[0-9]{3}|^[0-9]+$', asnList[i].findAll('td', {'class':'alignright'})[3].text.strip())[0]
-            asnJson[asnNumber]['Routes v4'] = int(routeV4String.replace(',',''))
-            asnJson[asnNumber]['Routes v6'] = int(routeV6String.replace(',',''))
-        print asnJson
+            temp[asnNumber]['Routes v4'] = int(routeV4String.replace(',',''))
+            temp[asnNumber]['Routes v6'] = int(routeV6String.replace(',',''))
+        asnJson.append(temp)
+    return asnJson
 if __name__ == "__main__":
     soup = url_to_soup('http://bgp.he.net/report/world')
     country_soup = soup.find('div', id='countries').find('tbody').findAll('tr')
     for i in range(len(country_soup)):
-        getAsnsForCountry(country_soup[i])
+        with open("asn.json", "a") as asn:
+            json.dump(getAsnsForCountry(country_soup[i]), asn)
         
 
     
